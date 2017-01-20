@@ -5,6 +5,8 @@ from os.path import dirname, abspath
 import libs
 import postfixrerouter
 from olookup import OnionServiceLookup
+from server import daemonize_server
+import sys
 
 
 class PostDNS(object):
@@ -41,17 +43,23 @@ class PostDNS(object):
                     or self.rerouters.onion.reroute(domain))
 
     def run(self, address):
-        domain = self.get_domain(address)
+        try:
+            domain = self.get_domain(address)
+        except IndexError:
+            return "500 Domain not found"
         routing = self._reroute(domain)
-        print("\n".join(routing) if routing else "200 smtp:")
+        return "\n".join(routing) if routing else "500 Not found"
 
 
 try:
-    postdns = PostDNS()
-    addr = libs.cross_input("")
-    if addr == 'get *':
-        print("200 :")
-    postdns.configure()
-    postdns.run(addr)
-except (KeyboardInterrupt, Exception):
-    print("200 :")
+    if sys.argv[-1] != "-c":
+        daemonize_server(PostDNS)
+    else:
+        postdns = PostDNS()
+        addr = libs.cross_input("")
+        if addr == 'get *':
+            print("500 request key is not an email address")
+        postdns.configure()
+        print(postdns.run(addr))
+except KeyboardInterrupt:
+    pass
