@@ -5,8 +5,8 @@ from collections import namedtuple
 from socket import error as SocketError
 from os.path import dirname, abspath
 import libs
-import postfixrerouter
-from olookup import OnionServiceLookup
+import routers
+from lookups import OnionServiceLookup
 from server import daemonize_server
 
 root_folder = dirname(dirname(abspath(__file__)))
@@ -15,12 +15,13 @@ default_mappings_path = "{0}/sources".format(root_folder)
 
 
 class PostDNS(object):
-    ref_config = ("{0}/config/postdns.ini"
+    ref_config = ("{0}/config/onionrouter.ini"
                   .format(dirname(dirname(abspath(__file__)))))
 
     def __init__(self, config_path, map_path=None):
         self.config = None
-        self.config_file = libs.find_conffile(config_path, prefix="postdns")
+        self.config_file = libs.find_conffile(config_path,
+                                              prefix="onionrouter")
         self.mappings_path = map_path
         self.rerouters = namedtuple('rerouters', ('lazy', 'onion'))
 
@@ -37,9 +38,9 @@ class PostDNS(object):
                                     other_config=self.config_file).verify()
         self.config = libs.config_reader(self.config_file)
         onion_resolver = OnionServiceLookup(self.config)
-        self.rerouters.lazy = postfixrerouter.LazyPostfixRerouter(
+        self.rerouters.lazy = routers.LazyPostfixRerouter(
             self.config, self.mappings_path)
-        self.rerouters.onion = postfixrerouter.OnionPostfixRerouter(
+        self.rerouters.onion = routers.OnionPostfixRerouter(
             self.config, onion_resolver)
 
     def _reroute(self, domain):
@@ -60,29 +61,34 @@ class PostDNS(object):
         return "\n".join(routing) if routing else "500 Not found"
 
 
-def main():
+def add_arguments():
     parser = argparse.ArgumentParser(description='PostDNS daemon for '
                                                  'postifx rerouting')
-    parser.add_argument('--simple', '-s', default=False, action='store_true',
-                        help='Simple test route mode no daemon)')
+    parser.add_argument('--foreground', '-f', default=False,
+                        action='store_true',
+                        help='Simple test route mode no daemon')
     parser.add_argument('--config', '-c', default=default_config_path,
                         help='Absolute path to config folder', type=str)
     parser.add_argument('--mappings', '-m', default=default_mappings_path,
-                        help='Absolute path to static mappings', type=str)
+                        help='Absolute path to static mappings folder',
+                        type=str)
     parser.add_argument('--host', '-lh', default="127.0.0.1",
                         help="Host for daemon to listen", type=str)
     parser.add_argument('--port', '-p', help="Port for daemon to listen",
-                        default=2026, type=int)
-    args = parser.parse_args()
+                        default=23000, type=int)
+    return parser
+
+
+def main():
+    args = add_arguments().parse_args()
     try:
         postdns = PostDNS(config_path=args.config, map_path=args.mappings)
-        postdns.configure()
-        if not args.simple:
+        if not args.foreground:
             daemonize_server(postdns, args.host, args.port)
         else:
             addr = libs.cross_input("")
             if addr == 'get *':
-                print("500 request key is not an email address")
+                print("500 Request key is not an email address")
             print(postdns.run(addr))
     except (libs.ConfigError, SocketError) as err:
         print(err)

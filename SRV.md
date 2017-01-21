@@ -16,7 +16,7 @@ You need to install a script which replies to [TCP table lookup queries](http://
 This will detail how to get the python script working, but there is also
 a [go implementation](https://git.autistici.org/ale/postfix-onion-transport), which is probably more performant.
 
-Download the [script](https://raw.githubusercontent.com/ehloonion/onionmx/master/postdns/postdns.py) and put it in /usr/local/bin and make it executable.
+Make the  [onionrouter script](https://raw.githubusercontent.com/ehloonion/onionmx/master/postdns/onionrouter.py) executable and create a softlink to /usr/local/bin.
 
 Install the needed dependency:
 
@@ -26,7 +26,7 @@ If working with virtualenvs, `pip install -r <project_path>/requirements.txt`
 
 # Configure the script
 
-Create a copy of the postdns.ini file and rename it postdns.local.ini to avoid tampering with the reference config (if no postdns.local.ini exists, the reference config will be used)
+Create a copy of the onionrouter.ini file and rename it onionrouter.local.ini to avoid tampering with the reference config (if no onionrouter.local.ini exists, the reference config will be used)
 
 Edit the config file and change
 
@@ -59,13 +59,13 @@ Other options are supported as well:
 
 Static lookups are supported with two different ways:
 
-1. Through the [postdns script](postdns/postdns.py)
+1. [Directly in the postfix level](#configure-postfix)
+2. Through the [onionrouter script](postdns/onionrouter.py)
     - In yaml format in the `sources` folder
         - Project already contains [a yaml file](sources/map.yml) which has some predefined mappings
     - Anything in the `sources` folder will be treated as a yaml file serving the static resolution (multiple files supported)
     - To add your own mappings, you can create your own yaml file in the `sources` folder either manually or by running [the generation script you can find
     in this repository](scripts/map2postfix-transport.rb)
-2. [Directly in the postfix level](#configure-postfix)
 
 # Configure postfix
 
@@ -83,7 +83,7 @@ This will lookup the entries in the static map and resolve them, but if they are
 
 Now set the following in master.cf:
 
-    127.0.0.1:23000 inet n n n - 0 spawn user=nobody argv=/usr/local/bin/postdns.py
+    127.0.0.1:23000 inet n n n - 0 spawn user=nobody argv=/usr/local/bin/onionrouter.py
 
 and restart postfix.
 

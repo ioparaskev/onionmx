@@ -16,7 +16,7 @@ def rslv(rerouter, conn):
                 # connection ended
                 return
             if addr == 'get *':
-                conn.sendall("200 :\n")
+                conn.sendall("500 Request key is not an email address\n")
             else:
                 conn.sendall("{0}\n".format(rerouter.run(addr)))
     except socket.timeout:
