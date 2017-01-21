@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-from collections import namedtuple
-from os.path import dirname, abspath
-from socket import error as SocketError
 import argparse
+from collections import namedtuple
+from socket import error as SocketError
+from os.path import dirname, abspath
 import libs
 import postfixrerouter
 from olookup import OnionServiceLookup
@@ -15,9 +15,12 @@ default_mappings_path = "{0}/sources".format(root_folder)
 
 
 class PostDNS(object):
+    ref_config = ("{0}/config/postdns.ini"
+                  .format(dirname(dirname(abspath(__file__)))))
+
     def __init__(self, config_path, map_path=None):
-        self.config = libs.config_reader(libs.find_conffile(config_path,
-                                                            prefix="postdns"))
+        self.config = None
+        self.config_file = libs.find_conffile(config_path, prefix="postdns")
         self.mappings_path = map_path
         self.rerouters = namedtuple('rerouters', ('lazy', 'onion'))
 
@@ -30,6 +33,9 @@ class PostDNS(object):
         return name.split("@")[1]
 
     def configure(self):
+        libs.ConfigIntegrityChecker(ref_config=self.ref_config,
+                                    other_config=self.config_file).verify()
+        self.config = libs.config_reader(self.config_file)
         onion_resolver = OnionServiceLookup(self.config)
         self.rerouters.lazy = postfixrerouter.LazyPostfixRerouter(
             self.config, self.mappings_path)
@@ -44,12 +50,15 @@ class PostDNS(object):
                     or self.rerouters.onion.reroute(domain))
 
     def run(self, address):
+        if not self.config:
+            self.configure()
         try:
             domain = self.get_domain(address)
         except IndexError:
             return "500 Domain not found"
         routing = self._reroute(domain)
         return "\n".join(routing) if routing else "500 Not found"
+
 
 def main():
     parser = argparse.ArgumentParser(description='PostDNS daemon for '
@@ -75,7 +84,7 @@ def main():
             if addr == 'get *':
                 print("500 request key is not an email address")
             print(postdns.run(addr))
-    except (libs.ConfigNotFoundError, SocketError) as err:
+    except (libs.ConfigError, SocketError) as err:
         print(err)
     except KeyboardInterrupt:
         pass

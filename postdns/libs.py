@@ -8,8 +8,45 @@ except ImportError:
     import configparser
 
 
-class ConfigNotFoundError(Exception):
+class ConfigError(Exception):
     pass
+
+
+class ConfigNotFoundError(ConfigError):
+    pass
+
+
+class ConfigIntegrityError(ConfigError):
+    pass
+
+
+class ConfigIntegrityChecker(object):
+    def __init__(self, ref_config, other_config):
+        self._ref_reader = config_reader(ref_config)
+        self._oth_reader = config_reader(other_config)
+        self.ref_config = ref_config
+        self.other_config = other_config
+
+    def _verify_sections(self):
+        if set(self._ref_reader.sections()).difference(
+                set(self._oth_reader.sections())):
+            raise RuntimeError
+
+    def _verify_options(self):
+        for section in self._ref_reader.sections():
+            if set(self._ref_reader.options(section)).difference(
+                    set(self._oth_reader.options(section))):
+                raise RuntimeError
+
+    def verify(self):
+        try:
+            self._verify_sections()
+            self._verify_options()
+        except RuntimeError:
+            raise ConfigIntegrityError(
+                "{loc} does not match the reference config file {ref}\n"
+                "Is your local config up to date?".format(
+                    loc=self.other_config, ref=self.ref_config))
 
 
 def cross_input(text):
