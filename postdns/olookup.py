@@ -1,12 +1,11 @@
-import dns.exception
-import dns.resolver
+from dns.resolver import Resolver
 import re
 
 
 class OnionServiceLookup(object):
     def __init__(self, config):
         self.config = config
-        self.resolver = dns.resolver.Resolver()
+        self.resolver = Resolver()
         self.resolver.nameservers = self.config.get("RESOLVER",
                                                     "resolver_ip").split(",")
         self.resolver.port = int(self.config.get("RESOLVER", "resolver_port"))
@@ -38,9 +37,6 @@ class OnionServiceLookup(object):
             return tuple("")
 
     def lookup(self, domain):
-        try:
-            query = self.resolver.query(self._craft_format_record(domain),
-                                        "SRV", tcp=self.use_tcp)
-            return self._craft_output(self._map_answers(query))
-        except dns.exception.DNSException:
-            return tuple("")
+        query = self.resolver.query(self._craft_format_record(domain),
+                                    "SRV", tcp=self.use_tcp)
+        return self._craft_output(self._map_answers(query))

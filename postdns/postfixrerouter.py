@@ -1,4 +1,5 @@
 from abc import abstractmethod, ABCMeta
+from dns import exception as dnsexception
 import libs
 
 
@@ -44,5 +45,8 @@ class OnionPostfixRerouter(PostfixRerouter):
         self.onion_resolver = onion_resolver
 
     def reroute(self, domain):
-        return super(OnionPostfixRerouter, self).reroute(
-            self.onion_resolver.lookup(domain))
+        try:
+            return super(OnionPostfixRerouter, self).reroute(
+                self.onion_resolver.lookup(domain))
+        except dnsexception.DNSException as err:
+            return tuple(("500 {0}".format(err),))

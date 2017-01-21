@@ -8,6 +8,10 @@ except ImportError:
     import configparser
 
 
+class ConfigNotFoundError(Exception):
+    pass
+
+
 def cross_input(text):
     """
     Returns the correct input function callback to be used for python 3.x
@@ -42,7 +46,8 @@ def find_conffile(conf_path, prefix='', suffix=".ini"):
             if os.stat(conffile).st_size:
                 return conffile
 
-    raise Exception('No configuration file found in {0}'.format(conf_path))
+    raise ConfigNotFoundError('No configuration file found in {0}'
+                              .format(conf_path))
 
 
 def yaml_loader(yaml_path):

@@ -40,6 +40,20 @@ The script queries the destination domain for a specific SRV record, `_onion-mx.
 - To change the SRV record the scripts looks for, edit the config file mentioned above and change under the `DNS` section the `srv_record` field with the SRV record you have setup (default is `_onion-mx._tcp.`)
 - To change the service that will be used when a `.onion` address is found,  edit the config file mentioned above and change under the `REROUTE` section the `onion_transport` field with the service you want to be used (default is `smtptor`)
 
+# Execution options
+Onionrouter script by default runs in server mode and acts as a daemon waiting for connections
+
+Daemon mode can be configured with the following options:
+
+    - --port *PORT* **or** -p *PORT* to define port for daemon to listen (default 23000)
+    - --host *HOST* **or** -lh *HOST* to define host for daemon to listen (default 127.0.0.1)
+
+Other options are supported as well:
+
+    - --foreground **or** -f to run onionrouter in foreground mode for debugging or testing purposes without daemon
+    - --config *CONFIG* **or** -c *CONFIG* to define absolute path to config folder (must contain a `postdns.local.ini` file inside)
+    - --mappings *MAPPINGS* **or** -m *MAPPINGS* to define absolute path to [static mappings](#static-resolution-option) folder (everything inside will be parsed as a yaml file)
+
 
 ## Static resolution option
 
