@@ -49,4 +49,4 @@ class OnionPostfixRerouter(PostfixRerouter):
             return super(OnionPostfixRerouter, self).reroute(
                 self.onion_resolver.lookup(domain))
         except dnsexception.DNSException as err:
-            return tuple(("500 {0}".format(err),))
+            return tuple(("500 {0}".format(str(err) or "Not found"),))

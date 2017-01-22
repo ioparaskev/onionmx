@@ -56,15 +56,16 @@ class PostDNS(object):
         try:
             domain = self.get_domain(address)
         except IndexError:
-            return "500 Domain not found"
+            return "500 Request key is not an email address"
         routing = self._reroute(domain)
-        return "\n".join(routing) if routing else "500 Not found"
+        # in the end, there can be only one response
+        return routing[0] if routing else "500 Not found"
 
 
 def add_arguments():
     parser = argparse.ArgumentParser(description='PostDNS daemon for '
                                                  'postifx rerouting')
-    parser.add_argument('--foreground', '-f', default=False,
+    parser.add_argument('--interactive', '-i', default=False,
                         action='store_true',
                         help='Simple test route mode no daemon')
     parser.add_argument('--config', '-c', default=default_config_path,
@@ -83,10 +84,10 @@ def main():
     args = add_arguments().parse_args()
     try:
         postdns = PostDNS(config_path=args.config, map_path=args.mappings)
-        if not args.foreground:
+        if not args.interactive:
             daemonize_server(postdns, args.host, args.port)
         else:
-            addr = libs.cross_input("")
+            addr = libs.cross_input("Enter an email address: ")
             if addr == 'get *':
                 print("500 Request key is not an email address")
             print(postdns.run(addr))

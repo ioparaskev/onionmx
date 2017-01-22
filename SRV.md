@@ -50,7 +50,7 @@ Daemon mode can be configured with the following options:
 
 Other options are supported as well:
 
-    - --foreground **or** -f to run onionrouter in foreground mode for debugging or testing purposes without daemon
+    - --interactive **or** -i to run onionrouter in interactive input mode for debugging or testing purposes without daemon
     - --config *CONFIG* **or** -c *CONFIG* to define absolute path to config folder (must contain a `postdns.local.ini` file inside)
     - --mappings *MAPPINGS* **or** -m *MAPPINGS* to define absolute path to [static mappings](#static-resolution-option) folder (everything inside will be parsed as a yaml file)
 
