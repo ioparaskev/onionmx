@@ -68,23 +68,37 @@ def config_reader(conf_path):
     return config
 
 
-def find_conffile(conf_path, prefix='', suffix=".ini"):
+def get_full_path_files_for_dir(directory_path):
     """
-    Checks if a local configuration file has been created and is not empty
-    and returns it, otherwise it checks if a default configuration exists and
-    is not empty
-    If none of the two exists, it raises an Exception
+    List all filepaths in a dir recursively
     """
-    conf_params = (conf_path, prefix, suffix)
-    confs = ("{0}/{1}.local{2}".format(*conf_params),
-             "{0}/{1}{2}".format(*conf_params))
-    for conffile in confs:
-        if os.path.exists(conffile):
-            if os.stat(conffile).st_size:
-                return conffile
+    return {os.path.join(dirpath, fname)
+            for dirpath, dirnames, filenames in tuple(os.walk(directory_path))
+            for fname in filenames}
 
-    raise ConfigNotFoundError('No configuration file found in {0}'
-                              .format(conf_path))
+
+def find_file(directory_path, filename):
+    """
+    Find filename in a dir recursively
+    """
+    return next((x for x in get_full_path_files_for_dir(directory_path)
+                 if filename == os.path.split(x)[-1]), None)
+
+
+def get_conffile(conf_path, prefix='', suffix=".ini"):
+    """
+    Finds conf file in `conf_path`
+    If `conf_path` is file, returns `conf_path`
+    Else it searches to find a file with `prefix``suffix` format
+    """
+    if os.path.isfile(conf_path):
+        return conf_path
+
+    found_file = find_file(conf_path, "{0}{1}".format(prefix, suffix))
+    if not found_file:
+        raise ConfigNotFoundError('No configuration file found in {0}'
+                                  .format(conf_path))
+    return found_file
 
 
 def yaml_loader(yaml_path):

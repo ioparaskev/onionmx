@@ -15,13 +15,12 @@ default_mappings_path = "{0}/sources".format(root_folder)
 
 
 class PostDNS(object):
-    ref_config = ("{0}/config/onionrouter.ini"
-                  .format(dirname(dirname(abspath(__file__)))))
+    ref_config = ("{0}/onionrouter.ini".format(default_config_path))
 
     def __init__(self, config_path, map_path=None):
         self.config = None
-        self.config_file = libs.find_conffile(config_path,
-                                              prefix="onionrouter")
+        self.config_file = libs.get_conffile(config_path,
+                                             prefix="onionrouter")
         self.mappings_path = map_path
         self.rerouters = namedtuple('rerouters', ('lazy', 'onion'))
 
@@ -69,7 +68,7 @@ def add_arguments():
                         action='store_true',
                         help='Simple test route mode no daemon')
     parser.add_argument('--config', '-c', default=default_config_path,
-                        help='Absolute path to config folder', type=str)
+                        help='Absolute path to config folder/file', type=str)
     parser.add_argument('--mappings', '-m', default=default_mappings_path,
                         help='Absolute path to static mappings folder',
                         type=str)
@@ -95,6 +94,7 @@ def main():
         print(err)
     except KeyboardInterrupt:
         pass
+
 
 if __name__ == '__main__':
     main()
