@@ -70,7 +70,7 @@ def add_arguments():
     parser.add_argument('--config', '-c', default=default_config_path,
                         help='Absolute path to config folder/file', type=str)
     parser.add_argument('--mappings', '-m', default=default_mappings_path,
-                        help='Absolute path to static mappings folder',
+                        help='Absolute path to static mappings folder/file',
                         type=str)
     parser.add_argument('--host', '-lh', default="127.0.0.1",
                         help="Host for daemon to listen", type=str)

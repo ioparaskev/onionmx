@@ -1,6 +1,6 @@
+import re
 import sys
 import os
-from collections import namedtuple
 from yaml import load
 try:
     import ConfigParser as configparser
@@ -85,6 +85,12 @@ def find_file(directory_path, filename):
                  if filename == os.path.split(x)[-1]), None)
 
 
+def find_files_with_suffix(directory_path, suffix):
+    all_files = get_full_path_files_for_dir(directory_path)
+    matcher = re.compile(r".*\.{suffix}$".format(suffix=suffix), re.IGNORECASE)
+    return (a_file for a_file in all_files if re.match(matcher, a_file))
+
+
 def get_conffile(conf_path, prefix='', suffix=".ini"):
     """
     Finds conf file in `conf_path`
@@ -102,15 +108,31 @@ def get_conffile(conf_path, prefix='', suffix=".ini"):
 
 
 def yaml_loader(yaml_path):
-    if os.path.exists(yaml_path):
-        folder_structure = namedtuple('fst', ('dir', 'folders', 'files'))
-        structure = folder_structure(*tuple(os.walk(yaml_path))[0])
-        for filename in structure.files:
-            with open("{0}/{1}".format(yaml_path, filename), 'r') as f:
-                yield f
+    """
+    Yields yaml files
+    Supports folder lookup
+    :param yaml_path: path pointing to a yaml file or a dir with yaml files
+    :return: yields open file
+    """
+    if not os.path.exists(yaml_path):
+        return
+
+    if os.path.isdir(yaml_path):
+        all_files = sorted(find_files_with_suffix(yaml_path, "yml"))
+    else:
+        all_files = [yaml_path]
+
+    for filename in all_files:
+        with open(filename, 'r') as yaml_file:
+            yield yaml_file
 
 
 def load_yamls(yaml_path):
+    """
+    Returns a dict with mappings defined in yaml file(s)
+    :param yaml_path: path pointing to a yaml file or a dir with yaml files
+    :rtype: dict
+    """
     yaml_mapping = dict()
     for f in yaml_loader(yaml_path):
         yaml_mapping.update(load(f))
