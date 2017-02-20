@@ -62,20 +62,23 @@ class PostDNS(object):
 
 
 def add_arguments():
-    parser = argparse.ArgumentParser(description='PostDNS daemon for '
-                                                 'postifx rerouting')
+    parser = argparse.ArgumentParser(
+        description='PostDNS daemon for postifx rerouting')
     parser.add_argument('--interactive', '-i', default=False,
                         action='store_true',
                         help='Simple test route mode no daemon')
     parser.add_argument('--config', '-c', default=default_config_path,
-                        help='Absolute path to config folder/file', type=str)
+                        help='Absolute path to config folder/file '
+                             '(default: %(default)s)', type=str)
     parser.add_argument('--mappings', '-m', default=default_mappings_path,
-                        help='Absolute path to static mappings folder/file',
-                        type=str)
-    parser.add_argument('--host', '-lh', default="127.0.0.1",
-                        help="Host for daemon to listen", type=str)
-    parser.add_argument('--port', '-p', help="Port for daemon to listen",
-                        default=23000, type=int)
+                        help='Absolute path to static mappings folder/file '
+                             '(default: %(default)s)', type=str)
+    parser.add_argument('--host', '-l', default="127.0.0.1",
+                        help="Host for daemon to listen "
+                             "(default: %(default)s)", type=str)
+    parser.add_argument('--port', '-p', default=23000, type=int,
+                        help="Port for daemon to listen "
+                             "(default: %(default)s)")
     return parser
 
 
