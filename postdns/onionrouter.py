@@ -3,15 +3,13 @@
 import argparse
 from collections import namedtuple
 from socket import error as SocketError
-from os.path import dirname, abspath
 import libs
 import routers
 from lookups import OnionServiceLookup
 from server import daemonize_server
 
-root_folder = dirname(dirname(abspath(__file__)))
-default_config_path = "{0}/config".format(root_folder)
-default_mappings_path = "{0}/sources".format(root_folder)
+default_config_path = "/etc/onionrouter/onionrouter.d"
+default_mappings_path = "/etc/onionrouter/onionrouter.d/mappings"
 
 
 class PostDNS(object):
@@ -82,6 +80,15 @@ def add_arguments():
     return parser
 
 
+def interactive_reroute(postdns):
+    while True:
+        addr = libs.cross_input("Enter an email address: ")
+        if addr == 'get *':
+            print("500 Request key is not an email address")
+        else:
+            print(postdns.run(addr))
+
+
 def main():
     args = add_arguments().parse_args()
     try:
@@ -89,10 +96,7 @@ def main():
         if not args.interactive:
             daemonize_server(postdns, args.host, args.port)
         else:
-            addr = libs.cross_input("Enter an email address: ")
-            if addr == 'get *':
-                print("500 Request key is not an email address")
-            print(postdns.run(addr))
+            interactive_reroute(postdns)
     except (libs.ConfigError, SocketError) as err:
         print(err)
     except KeyboardInterrupt:
