@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-
+from __future__ import absolute_import
 import argparse
 from collections import namedtuple
 from socket import error as SocketError
-import libs
-import routers
-from lookups import OnionServiceLookup
-from server import daemonize_server
+import postdns.libs as libs
+import postdns.routers as routers
+from postdns.lookups import OnionServiceLookup
+from postdns.sockets import daemonize_server, client
 
 default_config_path = "/etc/onionrouter/onionrouter.d"
 default_mappings_path = "/etc/onionrouter/onionrouter.d/mappings"
@@ -65,6 +65,9 @@ def add_arguments():
     parser.add_argument('--interactive', '-i', default=False,
                         action='store_true',
                         help='Simple test route mode no daemon')
+    parser.add_argument('--debug', '-d', default=False,
+                        action='store_true',
+                        help='Connect to daemon for debug')
     parser.add_argument('--config', '-c', default=default_config_path,
                         help='Absolute path to config folder/file '
                              '(default: %(default)s)', type=str)
@@ -93,10 +96,12 @@ def main():
     args = add_arguments().parse_args()
     try:
         postdns = PostDNS(config_path=args.config, map_path=args.mappings)
-        if not args.interactive:
-            daemonize_server(postdns, args.host, args.port)
-        else:
+        if args.interactive:
             interactive_reroute(postdns)
+        if args.debug:
+            client(args.host, args.port)
+        else:
+            daemonize_server(postdns, args.host, args.port)
     except (libs.ConfigError, SocketError) as err:
         print(err)
     except KeyboardInterrupt:

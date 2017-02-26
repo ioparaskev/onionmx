@@ -62,6 +62,9 @@ Other options are supported as well:
 
 - `--interactive` **or** `-i` to run onionrouter in interactive input
 mode for debugging or testing purposes without daemon
+- `--debug` **or** `-d` to connect to the daemon and ineract with.
+Use the `host` and `port` options to define the options for the
+connection to the daemon
 - `--config` *CONFIG* **or** `-c` *CONFIG* to define the absolute path
 to config folder (must contain a `onionrouter.ini` file inside) or
 config file

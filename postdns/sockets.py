@@ -1,6 +1,7 @@
 import socket
 import multiprocessing
 import atexit
+import postdns.libs as libs
 
 
 def close_socket(sock):
@@ -37,3 +38,16 @@ def daemonize_server(rerouter, host, port):
                                                              conn))
         process.daemon = True
         process.start()
+
+
+def client(host, port):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((host, port))
+    atexit.register(close_socket, sock=sock)
+    while True:
+        addr = libs.cross_input("Enter an email address: ")
+        if addr == 'get *':
+            print("500 Request key is not an email address")
+        else:
+            sock.sendall(addr)
+            print(sock.recv(1024).strip())
