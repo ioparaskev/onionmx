@@ -62,13 +62,16 @@ Other options are supported as well:
 
 - `--interactive` **or** `-i` to run onionrouter in interactive input
 mode for debugging or testing purposes without daemon
-- `--debug` **or** `-d` to connect to the daemon and ineract with.
+- `--client` **or** `-c` to connect to the daemon and ineract with.
 Use the `host` and `port` options to define the options for the
 connection to the daemon
-- `--config` *CONFIG* **or** `-c` *CONFIG* to define the absolute path
+- `--debug` **or** `-d` to start the daemon in debug mode. In this mode,
+daemon will also print (besides replying) the queries and answers
+Use the `host` and `port` options to define the options for the daemon
+- `--config` *CONFIG* to define the absolute path
 to config folder (must contain a `onionrouter.ini` file inside) or
 config file
-- `--mappings` *MAPPINGS* **or** `-m` *MAPPINGS* to define absolute path
+- `--mappings` *MAPPINGS* to define absolute path
 to [static mappings](#static-resolution-option) folder (everything
 inside will be parsed as a yaml file) or yaml file
 
