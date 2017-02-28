@@ -13,10 +13,13 @@ class PostfixRerouter(object):
     def reroute_service(self):
         return self.config.get("REROUTE", "onion_transport")
 
-    @abstractmethod
-    def reroute(self, answers):
+    def map_answers(self, answers):
         return tuple("200 {rservice}:[{ans}]".format(
             rservice=self.reroute_service, ans=x) for x in answers)
+
+    @abstractmethod
+    def reroute(self, domain):
+        pass
 
 
 class LazyPostfixRerouter(PostfixRerouter):
@@ -36,7 +39,7 @@ class LazyPostfixRerouter(PostfixRerouter):
     def reroute(self, domain):
         if not self.static_mappings:
             self._setup_static_mappings()
-        return super(LazyPostfixRerouter, self).reroute(self._lazy(domain))
+        return self.map_answers(self._lazy(domain))
 
 
 class OnionPostfixRerouter(PostfixRerouter):
@@ -46,7 +49,6 @@ class OnionPostfixRerouter(PostfixRerouter):
 
     def reroute(self, domain):
         try:
-            return super(OnionPostfixRerouter, self).reroute(
-                self.onion_resolver.lookup(domain))
+            return self.map_answers(self.onion_resolver.lookup(domain))
         except dnsexception.DNSException as err:
             return tuple(("500 {0}".format(str(err) or "Not found"),))
