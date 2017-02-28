@@ -8,8 +8,8 @@ import postdns.routers as routers
 from postdns.lookups import OnionServiceLookup
 from postdns.sockets import daemonize_server, client
 
-default_config_path = "/etc/onionrouter/onionrouter.d"
-default_mappings_path = "/etc/onionrouter/onionrouter.d/mappings"
+default_config_path = "/etc/onionrouter/"
+default_mappings_path = "/etc/onionrouter/mappings"
 
 
 class PostDNS(object):

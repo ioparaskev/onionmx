@@ -28,7 +28,7 @@ If working with virtualenvs, `pip install -r <project_path>/requirements.txt`
 
 Copy and/or update the onionrouter.ini file and update it with your settings
 (reference file is in `config` folder if you cloned the git repo
-or in `/etc/onionrouter/onionrouter.d/` if you installed the package)
+or in `/etc/onionrouter/` if you installed the package)
 
 Edit the config file and change
 
@@ -82,7 +82,7 @@ Static lookups are supported with two different ways:
     - In yaml format in the `sources` folder
         - Project already contains [a yaml file](sources/map.yml) which
         has some predefined mappings. If you have installed the package,
-         the file is in `/etc/onionrouter/onionrouter.d/mappings`
+         the file is in `/etc/onionrouter/mappings`
     - Anything in the `sources` folder will be treated as a yaml file
     serving the static resolution (multiple files supported)
     - To add your own mappings, you can create your own yaml file in
