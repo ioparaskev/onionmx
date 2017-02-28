@@ -1,8 +1,8 @@
-from __future__ import absolute_import, print_function
+from __future__ import print_function
 import socket
 import multiprocessing
 import atexit
-import postdns.libs as libs
+import libs
 
 
 def close_socket(sock):
@@ -13,7 +13,7 @@ def close_socket(sock):
 def resolve(rerouter, conn, resolve_callback=lambda q, a: (q, a)):
     try:
         while True:
-            addr = conn.recv(1024).strip()
+            addr = conn.recv(1024).decode().strip()
             if not addr:
                 # connection ended
                 return
@@ -22,12 +22,12 @@ def resolve(rerouter, conn, resolve_callback=lambda q, a: (q, a)):
             else:
                 result = rerouter.run(addr)
                 resolve_callback(addr, result)
-                conn.sendall("{0}\n".format(result))
+                conn.sendall("{0}\n".format(result).encode())
     except socket.timeout:
         return
     except BaseException as err:
         # todo log
-        conn.sendall("500 {0}".format(err))
+        conn.sendall("500 {0}".format(err).encode())
 
 
 def daemonize_server(rerouter, host, port, resolver=resolve):
@@ -36,7 +36,7 @@ def daemonize_server(rerouter, host, port, resolver=resolve):
     sock.listen(1)
     atexit.register(close_socket, sock=sock)
     while True:
-        conn, address = sock.accept()
+        conn, _ = sock.accept()
         process = multiprocessing.Process(target=resolver,
                                           args=(rerouter, conn))
         process.daemon = True
@@ -52,5 +52,5 @@ def client(host, port):
         if addr == 'get *':
             print("500 Request key is not an email address")
         else:
-            sock.sendall(addr)
-            print(sock.recv(1024).strip())
+            sock.sendall(addr.encode())
+            print(str(sock.recv(1024).decode()).strip())

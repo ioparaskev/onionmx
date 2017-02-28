@@ -1,14 +1,14 @@
 #!/usr/bin/env python
-from __future__ import absolute_import, print_function
+from __future__ import print_function
 import sys
 import argparse
 from collections import namedtuple
 from socket import error as socket_error
 from functools import partial
-import postdns.libs as libs
-import postdns.routers as routers
-from postdns.lookups import OnionServiceLookup
-from postdns.sockets import daemonize_server, client, resolve
+import libs
+import routers
+from lookups import OnionServiceLookup
+from sockets import daemonize_server, client, resolve
 
 default_config_path = "/etc/onionrouter/"
 default_mappings_path = "/etc/onionrouter/mappings"
@@ -101,7 +101,7 @@ def craft_resolver(callback):
 
 
 def validate_flag_arguments(*flags):
-    if len([x for x in flags]) > 1:
+    if len([x for x in flags if x]) > 1:
         raise RuntimeWarning("Cannot use multiple modes. Choose only one mode")
 
 
