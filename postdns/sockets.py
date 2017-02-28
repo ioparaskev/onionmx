@@ -32,6 +32,8 @@ def resolve(rerouter, conn, resolve_callback=lambda q, a: (q, a)):
 
 def daemonize_server(rerouter, host, port, resolver=resolve):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # add reuse to 1 sec to avoid reuse error when server closes before client
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind((host, port))
     sock.listen(1)
     atexit.register(close_socket, sock=sock)
