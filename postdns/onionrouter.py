@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, print_function
+import sys
 import argparse
 from collections import namedtuple
 from socket import error as socket_error
@@ -11,17 +12,23 @@ from postdns.sockets import daemonize_server, client, resolve
 
 default_config_path = "/etc/onionrouter/"
 default_mappings_path = "/etc/onionrouter/mappings"
+rerouters = namedtuple('rerouters', ('lazy', 'onion'))
 
 
 class PostDNS(object):
     ref_config = ("{0}/onionrouter.ini".format(default_config_path))
 
     def __init__(self, config_path, map_path=None):
-        self.config = None
         self.config_file = libs.get_conffile(config_path,
                                              prefix="onionrouter")
         self.mappings_path = map_path
-        self.rerouters = namedtuple('rerouters', ('lazy', 'onion'))
+        libs.ConfigIntegrityChecker(ref_config=self.ref_config,
+                                    other_config=self.config_file).verify()
+        self.config = libs.config_reader(self.config_file)
+        self.rerouters = rerouters(
+            lazy=routers.LazyPostfixRerouter(self.config, self.mappings_path),
+            onion=routers.OnionPostfixRerouter(
+                self.config, OnionServiceLookup(self.config)))
 
     @property
     def myname(self):
@@ -31,16 +38,6 @@ class PostDNS(object):
     def get_domain(name):
         return name.split("@")[1]
 
-    def configure(self):
-        libs.ConfigIntegrityChecker(ref_config=self.ref_config,
-                                    other_config=self.config_file).verify()
-        self.config = libs.config_reader(self.config_file)
-        onion_resolver = OnionServiceLookup(self.config)
-        self.rerouters.lazy = routers.LazyPostfixRerouter(
-            self.config, self.mappings_path)
-        self.rerouters.onion = routers.OnionPostfixRerouter(
-            self.config, onion_resolver)
-
     def _reroute(self, domain):
         if self.myname == domain:
             return tuple(["200 :"])
@@ -49,8 +46,6 @@ class PostDNS(object):
                     or self.rerouters.onion.reroute(domain))
 
     def run(self, address):
-        if not self.config:
-            self.configure()
         try:
             domain = self.get_domain(address)
         except IndexError:
@@ -67,10 +62,11 @@ def add_arguments():
                         action='store_true',
                         help='Simple test route mode without daemon')
     parser.add_argument('--debug', '-d', default=False, action='store_true',
-                        help='Run daemon and also print the '
-                             'queries & replies'),
+                        help='Debug mode. Run daemon and also print the '
+                             'queries & replies')
     parser.add_argument('--client', '-c', default=False, action='store_true',
-                        help='Connect as a client to daemon for debug')
+                        help='Client mode. Connect as a client to daemon '
+                             'for testing / debug')
     parser.add_argument('--config', default=default_config_path,
                         help='Absolute path to config folder/file '
                              '(default: %(default)s)', type=str)
@@ -104,24 +100,32 @@ def craft_resolver(callback):
     return partial(resolve, resolve_callback=callback)
 
 
-def main():
-    args = add_arguments().parse_args()
-    try:
-        postdns = PostDNS(config_path=args.config, map_path=args.mappings)
-        if args.interactive:
-            interactive_reroute(postdns)
+def validate_flag_arguments(*flags):
+    if len([x for x in flags]) > 1:
+        raise RuntimeWarning("Cannot use multiple modes. Choose only one mode")
 
-        if args.client:
-            client(args.host, args.port)
-        else:
-            resolver = craft_resolver(reroute_debugger
-                                      if args.debug else lambda *args:args)
-            daemonize_server(postdns, args.host, args.port, resolver=resolver)
-    except (libs.ConfigError, socket_error) as err:
-        print(err)
-    except KeyboardInterrupt:
-        pass
+
+def main():
+    postdns = PostDNS(config_path=args.config, map_path=args.mappings)
+
+    if args.interactive:
+        interactive_reroute(postdns)
+
+    if args.client:
+        client(args.host, args.port)
+    else:
+        resolver = craft_resolver(reroute_debugger
+                                  if args.debug else lambda *args: args)
+        daemonize_server(postdns, args.host, args.port, resolver=resolver)
 
 
 if __name__ == '__main__':
-    main()
+    args = add_arguments().parse_args()
+    try:
+        validate_flag_arguments(args.interactive, args.client, args.debug)
+        main()
+    except (libs.ConfigError, socket_error, RuntimeWarning) as err:
+        print(err)
+        sys.exit(1)
+    except KeyboardInterrupt:
+        sys.exit(0)
